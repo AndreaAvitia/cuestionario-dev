@@ -2,7 +2,8 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Cuestionario Desarrollo Seguro - PDF & Custom 🦇</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cuestionario Desarrollo Seguro - PWA 🦇</title>
     <link rel="manifest" href="manifest.json">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <style>
@@ -16,74 +17,149 @@
             --text: #e0e0e0;
             --font-family: 'Segoe UI', system-ui, sans-serif;
         }
-        body { background: var(--bg); color: var(--text); font-family: var(--font-family); display: flex; flex-direction: column; align-items: center; padding: 2rem; margin: 0; }
-        .container { background: var(--surface); padding: 2rem; border-radius: 12px; border: 1px solid #333; box-shadow: 0 4px 20px rgba(168, 85, 247, 0.15); width: 100%; max-width: 800px; text-align: center; }
-        h1 { color: var(--primary); }
-        p.subtitle { color: #aaa; margin-bottom: 2rem; }
+        * { box-sizing: border-box; }
+        body { 
+            background: var(--bg); 
+            color: var(--text); 
+            font-family: var(--font-family); 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            padding: 1rem; 
+            margin: 0; 
+            min-height: 100vh;
+        }
+        .container { 
+            background: var(--surface); 
+            padding: 1.25rem; 
+            border-radius: 12px; 
+            border: 1px solid #333; 
+            box-shadow: 0 4px 20px rgba(168, 85, 247, 0.15); 
+            width: 100%; 
+            max-width: 700px; 
+            text-align: center; 
+        }
+        @media (min-width: 768px) {
+            body { padding: 2rem; }
+            .container { padding: 2rem; }
+        }
+        h1 { color: var(--primary); font-size: 1.5rem; margin-top: 0.5rem; }
+        @media (min-width: 768px) { h1 { font-size: 2rem; } }
+        p.subtitle { color: #aaa; margin-bottom: 1.5rem; font-size: 0.95rem; }
         
-        .drop-zone { border: 2px dashed var(--primary); padding: 40px 20px; border-radius: 12px; cursor: pointer; font-size: 1.1rem; color: var(--primary); transition: all 0.3s ease; background: rgba(0,0,0,0.2); margin-bottom: 20px; }
+        .drop-zone { 
+            border: 2px dashed var(--primary); 
+            padding: 30px 15px; 
+            border-radius: 12px; 
+            cursor: pointer; 
+            font-size: 1rem; 
+            color: var(--primary); 
+            transition: all 0.3s ease; 
+            background: rgba(0,0,0,0.2); 
+            margin-bottom: 20px; 
+        }
         .drop-zone:hover { background: rgba(168, 85, 247, 0.1); border-color: var(--primary-hover); }
         
-        .btn-action { background: var(--primary); color: #fff; text-align: center; border: none; font-weight: bold; font-size: 1.1rem; padding: 15px; border-radius: 8px; cursor: pointer; width: 100%; transition: all 0.2s ease; margin-bottom: 10px;}
+        .btn-action { 
+            background: var(--primary); 
+            color: #fff; 
+            text-align: center; 
+            border: none; 
+            font-weight: bold; 
+            font-size: 1rem; 
+            padding: 12px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            width: 100%; 
+            transition: all 0.2s ease; 
+            margin-bottom: 10px;
+        }
         .btn-action:hover { background: var(--primary-hover); }
-        .btn-secondary { background: #333; border: 1px solid var(--primary); color: #fff; padding: 10px 20px; border-radius: 8px; cursor: pointer; transition: background 0.2s; font-size: 1rem; width: 100%; margin-bottom: 10px;}
+        
+        .btn-secondary { 
+            background: #333; 
+            border: 1px solid var(--primary); 
+            color: #fff; 
+            padding: 12px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            transition: background 0.2s; 
+            font-size: 0.95rem; 
+            width: 100%; 
+            margin-bottom: 10px;
+        }
         .btn-secondary:hover { background: var(--primary); }
         
         .hidden { display: none !important; }
         
-        .setup-list { max-height: 60vh; overflow-y: auto; padding-right: 10px; margin-bottom: 20px; text-align: left; }
-        .setup-item { background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 3px solid var(--primary); }
-        .setup-question { font-weight: bold; margin-bottom: 10px; font-size: 1.1rem; }
-        .setup-options { display: flex; flex-direction: column; gap: 8px; }
-        .setup-options label { cursor: pointer; padding: 5px; border-radius: 4px; transition: background 0.2s; display: flex; align-items: center;}
+        .setup-list { max-height: 55vh; overflow-y: auto; padding-right: 5px; margin-bottom: 20px; text-align: left; }
+        .setup-item { background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; margin-bottom: 12px; border-left: 3px solid var(--primary); }
+        .setup-question { font-weight: bold; margin-bottom: 8px; font-size: 1rem; }
+        .setup-options { display: flex; flex-direction: column; gap: 6px; }
+        .setup-options label { cursor: pointer; padding: 4px; border-radius: 4px; display: flex; align-items: flex-start; font-size: 0.9rem; word-break: break-word; }
         .setup-options label:hover { background: rgba(168, 85, 247, 0.1); }
-        .setup-options input { margin-right: 10px; accent-color: var(--primary); flex-shrink: 0;}
+        .setup-options input { margin-right: 8px; margin-top: 3px; accent-color: var(--primary); flex-shrink: 0; }
         
-        .score-panel { text-align: center; font-size: 1.1rem; margin-bottom: 1.5rem; color: var(--primary-hover); font-weight: bold; }
-        h2.question-text { font-size: 1.3rem; margin-bottom: 1.5rem; line-height: 1.4; text-align: left;}
+        .score-panel { text-align: center; font-size: 0.95rem; margin-bottom: 1rem; color: var(--primary-hover); font-weight: bold; }
+        h2.question-text { font-size: 1.1rem; margin-bottom: 1.2rem; line-height: 1.4; text-align: left; word-break: break-word; }
+        @media (min-width: 768px) { h2.question-text { font-size: 1.3rem; } }
+        
         .options-container { display: flex; flex-direction: column; gap: 10px; }
-        .option-btn { background: transparent; color: var(--text); border: 2px solid #444; padding: 15px; border-radius: 8px; cursor: pointer; text-align: left; font-size: 1rem; transition: all 0.2s ease; }
+        .option-btn { 
+            background: transparent; 
+            color: var(--text); 
+            border: 2px solid #444; 
+            padding: 12px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            text-align: left; 
+            font-size: 0.95rem; 
+            transition: all 0.2s ease; 
+            word-break: break-word;
+        }
         .option-btn:hover:not(:disabled) { border-color: var(--primary); }
         .option-btn.correct { background: rgba(34, 197, 94, 0.2); border-color: var(--success); color: #fff; }
         .option-btn.incorrect { background: rgba(239, 68, 68, 0.2); border-color: var(--error); color: #fff; }
-        .feedback { text-align: center; margin-top: 15px; font-weight: bold; font-size: 1.2rem; min-height: 50px; }
+        
+        .feedback { text-align: center; margin-top: 15px; font-weight: bold; font-size: 1.1rem; min-height: 40px; }
         .feedback.success { color: var(--success); }
         .feedback.error { color: var(--error); }
-        .feedback-correct-text { font-size: 1rem; color: #ccc; font-weight: normal; display: block; margin-top: 5px; }
-        .footer-controls { margin-top: 2rem; display: flex; justify-content: space-between; }
+        .feedback-correct-text { font-size: 0.9rem; color: #ccc; font-weight: normal; display: block; margin-top: 5px; }
+        
+        .footer-controls { margin-top: 1.5rem; display: flex; justify-content: space-between; gap: 10px; }
+        .footer-controls button { width: auto; flex: 1; }
     </style>
 </head>
 <body>
     <div class="container" id="view-init">
-        <h1>🦇 Cuestionario desde PDF 🦇</h1>
+        <h1>🦇 Cuestionario Desarrollo Seguro 🦇</h1>
         
-        <!-- Botón para subir el archivo JSON de claves -->
         <input type="file" id="jsonInput" accept=".json" class="hidden">
         <button class="btn-secondary" style="border-color: var(--success); color: var(--success);" onclick="document.getElementById('jsonInput').click()">
             📥 Subir archivo 'respuestas.json'
         </button>
 
-        <div id="storage-notice" class="hidden" style="background: rgba(34, 197, 94, 0.1); padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid var(--success); text-align: center;">
-            <p>¡Tienes respuestas guardadas en tu navegador!</p>
-            <button class="btn-secondary" onclick="irAEstudio()">Ir directo a Estudiar las que ya llené</button>
-            <button class="btn-secondary" onclick="irAConfiguracion()">Continuar marcando respuestas</button>
-            <button class="btn-secondary" style="border-color: var(--error); color: #ccc;" onclick="borrarDatos()">Borrar todo e iniciar de cero</button>
+        <div id="storage-notice" class="hidden" style="background: rgba(34, 197, 94, 0.1); padding: 12px; border-radius: 8px; margin-bottom: 20px; border: 1px solid var(--success); text-align: center;">
+            <p style="margin: 0 0 10px 0; font-size: 0.9rem;">¡Tienes respuestas guardadas!</p>
+            <button class="btn-secondary" onclick="irAEstudio()">Estudiar respuestas guardadas</button>
+            <button class="btn-secondary" onclick="irAConfiguracion()">Revisar configuración</button>
+            <button class="btn-secondary" style="border-color: var(--error); color: #faa;" onclick="borrarDatos()">Borrar todo</button>
         </div>
         
         <div id="input-section">
-            <p class="subtitle">Sube tu archivo PDF de la guía. La app extraerá las preguntas y luego podrás subir tu archivo JSON con las respuestas.</p>
+            <p class="subtitle">Sube tu PDF para extraer las preguntas o carga tu JSON de respuestas.</p>
             <input type="file" id="pdfInput" accept="application/pdf" class="hidden">
             <div class="drop-zone" id="dropZone" onclick="document.getElementById('pdfInput').click()">
-                📄 Haz clic aquí o arrastra tu archivo PDF
+                📄 Toca aquí o arrastra tu PDF
             </div>
         </div>
     </div>
 
     <div class="container hidden" id="view-setup">
         <h1>Clave de Respuestas 🔑</h1>
-        <p class="subtitle">Selecciona la respuesta correcta. Puedes marcar solo algunas y estudiarlas, el resto se guardará para después.</p>
+        <p class="subtitle">Verifica tus respuestas o cárgalas con el archivo JSON.</p>
         <div class="setup-list" id="setupList"></div>
-        <button class="btn-action" onclick="guardarYEstudiar()">Guardar y empezar a Estudiar 🖤</button>
+        <button class="btn-action" onclick="guardarYEstudiar()">Guardar y Estudiar 🖤</button>
         <button class="btn-secondary" onclick="location.reload()">Volver al Inicio</button>
     </div>
 
@@ -93,8 +169,8 @@
         <div class="options-container" id="optionsContainer"></div>
         <div id="feedbackText" class="feedback"></div>
         <div class="footer-controls">
-            <button class="btn-secondary" style="width: auto;" onclick="location.reload()">Salir</button>
-            <button class="btn-secondary hidden" style="width: auto; background: var(--primary); border-color: var(--primary);" id="nextBtn" onclick="siguientePregunta()">Siguiente 🖤</button>
+            <button class="btn-secondary" onclick="location.reload()">Salir</button>
+            <button class="btn-secondary hidden" style="background: var(--primary); border-color: var(--primary);" id="nextBtn" onclick="siguientePregunta()">Siguiente 🦇</button>
         </div>
     </div>
 
@@ -115,7 +191,6 @@
             }
         };
 
-        // Lector del archivo JSON subido
         document.getElementById('jsonInput').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if(!file) return;
@@ -127,7 +202,7 @@
                     let preguntasGuardadas = JSON.parse(localStorage.getItem('cuestionario_custom_axity_pdf') || "[]");
                     
                     if(preguntasGuardadas.length === 0) {
-                        alert("Primero sube o arrastra tu archivo PDF en la app para extraer las preguntas antes de cargar el archivo JSON.");
+                        alert("Primero sube tu archivo PDF en la app para extraer las preguntas antes de cargar el JSON.");
                         return;
                     }
                     
@@ -137,7 +212,7 @@
                     });
                     
                     localStorage.setItem('cuestionario_custom_axity_pdf', JSON.stringify(preguntasGuardadas));
-                    alert("¡Las 258 respuestas se cargaron y sincronizaron con éxito! 🎉");
+                    alert("¡Las 258 respuestas se cargaron con éxito! 🎉");
                     location.reload();
                 } catch(err) {
                     alert("Error procesando el archivo JSON: " + err.message);
@@ -147,7 +222,7 @@
         });
 
         function borrarDatos() {
-            if(confirm("¿Estás segura de borrar todo tu progreso? Tendrás que volver a procesar el PDF.")) {
+            if(confirm("¿Estás segura de borrar todo tu progreso?")) {
                 localStorage.removeItem('cuestionario_custom_axity_pdf');
                 location.reload();
             }
@@ -168,7 +243,7 @@
 
         async function procesarPDF(file) {
             if(file.type !== 'application/pdf') return alert('Por favor sube un archivo PDF válido.');
-            dropZone.innerHTML = "✨ Extrayendo preguntas del PDF... 🦇";
+            dropZone.innerHTML = "✨ Extrayendo preguntas... 🦇";
             
             try {
                 const arrayBuffer = await file.arrayBuffer();
@@ -191,7 +266,7 @@
                 parsearTexto(textoExtraido);
             } catch(error) {
                 alert("Hubo un error leyendo el PDF: " + error.message);
-                dropZone.innerHTML = "📄 Haz clic aquí o arrastra tu PDF";
+                dropZone.innerHTML = "📄 Toca aquí o arrastra tu PDF";
             }
         }
 
@@ -234,8 +309,8 @@
                 guardarEnStorage();
                 irAConfiguracion();
             } else {
-                alert("No pude detectar el formato de preguntas. Asegúrate de que es la guía correcta.");
-                dropZone.innerHTML = "📄 Haz clic aquí o arrastra tu PDF";
+                alert("No pude detectar el formato de preguntas.");
+                dropZone.innerHTML = "📄 Toca aquí o arrastra tu PDF";
             }
         }
 
@@ -294,7 +369,7 @@
             preguntasQuiz = preguntas.filter(p => p.respuestaCorrecta !== null);
             
             if(preguntasQuiz.length === 0) {
-                alert("¡No has marcado ninguna respuesta correcta! Selecciona al menos una o sube tu archivo 'respuestas.json'.");
+                alert("¡No has marcado ninguna respuesta correcta o subido el JSON!");
                 return;
             }
 
@@ -309,7 +384,7 @@
 
         function mostrarPregunta() {
             const p = preguntasQuiz[actual];
-            document.getElementById('scoreDisplay').innerText = `Estudiando bloque de ${preguntasQuiz.length} | Aciertos: ${aciertos}`;
+            document.getElementById('scoreDisplay').innerText = `Estudiando (${preguntasQuiz.length}) | Aciertos: ${aciertos}`;
             document.getElementById('questionText').innerText = `${p.id}. ${p.pregunta}`;
             
             const container = document.getElementById('optionsContainer');
@@ -344,7 +419,7 @@
                 let opcionCorrectaObj = opciones.find(o => o.letra === letraCorrecta);
                 let textoCorrecto = opcionCorrectaObj ? `${opcionCorrectaObj.letra}) ${opcionCorrectaObj.texto}` : letraCorrecta;
                 
-                feedback.innerHTML = `Incorrecto 🥺 <span class="feedback-correct-text">La respuesta correcta era:<br><b>${textoCorrecto}</b></span>`;
+                feedback.innerHTML = `Incorrecto 🥺 <span class="feedback-correct-text">Era:<br><b>${textoCorrecto}</b></span>`;
                 feedback.className = 'feedback error';
                 
                 opciones.forEach((o, i) => {
@@ -354,7 +429,7 @@
                 });
             }
             
-            document.getElementById('scoreDisplay').innerText = `Estudiando bloque de ${preguntasQuiz.length} | Aciertos: ${aciertos}`;
+            document.getElementById('scoreDisplay').innerText = `Estudiando (${preguntasQuiz.length}) | Aciertos: ${aciertos}`;
             document.getElementById('nextBtn').classList.remove('hidden');
         }
 
@@ -366,12 +441,12 @@
                 let porcentaje = Math.round((aciertos / preguntasQuiz.length) * 100);
                 document.getElementById('view-quiz').innerHTML = 
                     `<h1 style="text-align:center;">¡Bloque Completado! 🦇</h1>
-                     <p class="subtitle" style="text-align:center;">Terminaste tu sesión de estudio de ${preguntasQuiz.length} preguntas.</p>
-                     <div style="text-align:center; font-size: 2rem; margin: 20px 0; color: var(--primary);">
+                     <p class="subtitle" style="text-align:center;">Sesión finalizada con éxito.</p>
+                     <div style="text-align:center; font-size: 1.8rem; margin: 20px 0; color: var(--primary);">
                         Calificación: ${aciertos} / ${preguntasQuiz.length} (${porcentaje}%)
                      </div>
                      <div style="text-align:center;">
-                        <button class="btn-secondary" style="width:auto;" onclick="location.reload()">Volver al Inicio</button>
+                        <button class="btn-secondary" style="width:100%;" onclick="location.reload()">Volver al Inicio</button>
                      </div>`;
             }
         }
