@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="es">
-<link rel="manifest" href="manifest.json">
 <head>
     <meta charset="UTF-8">
     <title>Cuestionario Desarrollo Seguro - PDF & Custom 🦇</title>
+    <link rel="manifest" href="manifest.json">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <style>
         :root {
@@ -21,8 +21,8 @@
         h1 { color: var(--primary); }
         p.subtitle { color: #aaa; margin-bottom: 2rem; }
         
-        .drop-zone { border: 2px dashed var(--primary); padding: 50px 20px; border-radius: 12px; cursor: pointer; font-size: 1.2rem; color: var(--primary); transition: all 0.3s ease; background: rgba(0,0,0,0.2); margin-bottom: 20px; }
-        .drop-zone:hover, .drop-zone.dragover { background: rgba(168, 85, 247, 0.1); border-color: var(--primary-hover); color: var(--primary-hover); }
+        .drop-zone { border: 2px dashed var(--primary); padding: 40px 20px; border-radius: 12px; cursor: pointer; font-size: 1.1rem; color: var(--primary); transition: all 0.3s ease; background: rgba(0,0,0,0.2); margin-bottom: 20px; }
+        .drop-zone:hover { background: rgba(168, 85, 247, 0.1); border-color: var(--primary-hover); }
         
         .btn-action { background: var(--primary); color: #fff; text-align: center; border: none; font-weight: bold; font-size: 1.1rem; padding: 15px; border-radius: 8px; cursor: pointer; width: 100%; transition: all 0.2s ease; margin-bottom: 10px;}
         .btn-action:hover { background: var(--primary-hover); }
@@ -56,6 +56,13 @@
 <body>
     <div class="container" id="view-init">
         <h1>🦇 Cuestionario desde PDF 🦇</h1>
+        
+        <!-- Botón para subir el archivo JSON de claves -->
+        <input type="file" id="jsonInput" accept=".json" class="hidden">
+        <button class="btn-secondary" style="border-color: var(--success); color: var(--success);" onclick="document.getElementById('jsonInput').click()">
+            📥 Subir archivo 'respuestas.json'
+        </button>
+
         <div id="storage-notice" class="hidden" style="background: rgba(34, 197, 94, 0.1); padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid var(--success); text-align: center;">
             <p>¡Tienes respuestas guardadas en tu navegador!</p>
             <button class="btn-secondary" onclick="irAEstudio()">Ir directo a Estudiar las que ya llené</button>
@@ -64,40 +71,13 @@
         </div>
         
         <div id="input-section">
-            <p class="subtitle">Sube tu archivo PDF de la guía. La app extraerá las preguntas y te dejará configurarlo manualmente.</p>
+            <p class="subtitle">Sube tu archivo PDF de la guía. La app extraerá las preguntas y luego podrás subir tu archivo JSON con las respuestas.</p>
             <input type="file" id="pdfInput" accept="application/pdf" class="hidden">
             <div class="drop-zone" id="dropZone" onclick="document.getElementById('pdfInput').click()">
                 📄 Haz clic aquí o arrastra tu archivo PDF
             </div>
         </div>
     </div>
-
-
-    <!-- Botón temporal para importar respuestas en el cel -->
-<button class="btn-secondary" onclick="importarDesdeCel()">📥 Cargar Clave Maestra de 258 Respuestas</button>
-
-<script>
-function importarDesdeCel() {
-    let rawJson = prompt("Pega aquí el arreglo completo de las claves:");
-    if(rawJson) {
-        try {
-            let claves = JSON.parse(rawJson);
-            let preguntasGuardadas = JSON.parse(localStorage.getItem('cuestionario_custom_axity_pdf') || "[]");
-            
-            preguntasGuardadas.forEach(p => {
-                let match = claves.find(c => c.id === p.id);
-                if(match) p.respuestaCorrecta = match.respuestaCorrecta;
-            });
-            
-            localStorage.setItem('cuestionario_custom_axity_pdf', JSON.stringify(preguntasGuardadas));
-            alert("¡Las 258 respuestas se cargaron con éxito!");
-            location.reload();
-        } catch(e) {
-            alert("El formato JSON es inválido, revisa bien lo que pegaste.");
-        }
-    }
-}
-</script>
 
     <div class="container hidden" id="view-setup">
         <h1>Clave de Respuestas 🔑</h1>
@@ -122,7 +102,7 @@ function importarDesdeCel() {
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
         
         let preguntas = [];
-        let preguntasQuiz = []; // Solo las que tengan respuesta asignada
+        let preguntasQuiz = [];
         let actual = 0;
         let aciertos = 0;
 
@@ -134,6 +114,37 @@ function importarDesdeCel() {
                 document.getElementById('input-section').classList.add('hidden');
             }
         };
+
+        // Lector del archivo JSON subido
+        document.getElementById('jsonInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                try {
+                    let claves = JSON.parse(event.target.result);
+                    let preguntasGuardadas = JSON.parse(localStorage.getItem('cuestionario_custom_axity_pdf') || "[]");
+                    
+                    if(preguntasGuardadas.length === 0) {
+                        alert("Primero sube o arrastra tu archivo PDF en la app para extraer las preguntas antes de cargar el archivo JSON.");
+                        return;
+                    }
+                    
+                    preguntasGuardadas.forEach(p => {
+                        let match = claves.find(c => c.id === p.id);
+                        if(match) p.respuestaCorrecta = match.respuestaCorrecta;
+                    });
+                    
+                    localStorage.setItem('cuestionario_custom_axity_pdf', JSON.stringify(preguntasGuardadas));
+                    alert("¡Las 258 respuestas se cargaron y sincronizaron con éxito! 🎉");
+                    location.reload();
+                } catch(err) {
+                    alert("Error procesando el archivo JSON: " + err.message);
+                }
+            };
+            reader.readAsText(file);
+        });
 
         function borrarDatos() {
             if(confirm("¿Estás segura de borrar todo tu progreso? Tendrás que volver a procesar el PDF.")) {
@@ -280,18 +291,11 @@ function importarDesdeCel() {
         }
 
         function irAEstudio() {
-            // Filtramos SOLO las preguntas que ya tienen respuesta marcada
             preguntasQuiz = preguntas.filter(p => p.respuestaCorrecta !== null);
             
             if(preguntasQuiz.length === 0) {
-                alert("¡No has marcado ninguna respuesta correcta! Selecciona al menos una en la lista para poder estudiar.");
+                alert("¡No has marcado ninguna respuesta correcta! Selecciona al menos una o sube tu archivo 'respuestas.json'.");
                 return;
-            }
-
-            if(preguntasQuiz.length < preguntas.length) {
-                if(!confirm(`Solo has llenado ${preguntasQuiz.length} de ${preguntas.length} preguntas. El cuestionario se armará únicamente con esas ${preguntasQuiz.length}. ¿Continuar?`)) {
-                    return;
-                }
             }
 
             document.getElementById('view-init').classList.add('hidden');
@@ -367,7 +371,7 @@ function importarDesdeCel() {
                         Calificación: ${aciertos} / ${preguntasQuiz.length} (${porcentaje}%)
                      </div>
                      <div style="text-align:center;">
-                        <button class="btn-secondary" style="width:auto;" onclick="location.reload()">Volver al Inicio y seguir agregando</button>
+                        <button class="btn-secondary" style="width:auto;" onclick="location.reload()">Volver al Inicio</button>
                      </div>`;
             }
         }
