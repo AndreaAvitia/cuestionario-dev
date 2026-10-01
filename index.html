@@ -72,6 +72,33 @@
         </div>
     </div>
 
+
+    <!-- Botón temporal para importar respuestas en el cel -->
+<button class="btn-secondary" onclick="importarDesdeCel()">📥 Cargar Clave Maestra de 258 Respuestas</button>
+
+<script>
+function importarDesdeCel() {
+    let rawJson = prompt("Pega aquí el arreglo completo de las claves:");
+    if(rawJson) {
+        try {
+            let claves = JSON.parse(rawJson);
+            let preguntasGuardadas = JSON.parse(localStorage.getItem('cuestionario_custom_axity_pdf') || "[]");
+            
+            preguntasGuardadas.forEach(p => {
+                let match = claves.find(c => c.id === p.id);
+                if(match) p.respuestaCorrecta = match.respuestaCorrecta;
+            });
+            
+            localStorage.setItem('cuestionario_custom_axity_pdf', JSON.stringify(preguntasGuardadas));
+            alert("¡Las 258 respuestas se cargaron con éxito!");
+            location.reload();
+        } catch(e) {
+            alert("El formato JSON es inválido, revisa bien lo que pegaste.");
+        }
+    }
+}
+</script>
+
     <div class="container hidden" id="view-setup">
         <h1>Clave de Respuestas 🔑</h1>
         <p class="subtitle">Selecciona la respuesta correcta. Puedes marcar solo algunas y estudiarlas, el resto se guardará para después.</p>
