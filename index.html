@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="es">
+<link rel="manifest" href="manifest.json">
+<head>
+    <meta charset="UTF-8">
+    <title>Cuestionario Desarrollo Seguro - PDF & Custom 🦇</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <style>
+        :root {
+            --bg: #121212;
+            --surface: #1e1e24;
+            --primary: #a855f7;
+            --primary-hover: #c084fc;
+            --success: #22c55e;
+            --error: #ef4444;
+            --text: #e0e0e0;
+            --font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+        body { background: var(--bg); color: var(--text); font-family: var(--font-family); display: flex; flex-direction: column; align-items: center; padding: 2rem; margin: 0; }
+        .container { background: var(--surface); padding: 2rem; border-radius: 12px; border: 1px solid #333; box-shadow: 0 4px 20px rgba(168, 85, 247, 0.15); width: 100%; max-width: 800px; text-align: center; }
+        h1 { color: var(--primary); }
+        p.subtitle { color: #aaa; margin-bottom: 2rem; }
+        
+        .drop-zone { border: 2px dashed var(--primary); padding: 50px 20px; border-radius: 12px; cursor: pointer; font-size: 1.2rem; color: var(--primary); transition: all 0.3s ease; background: rgba(0,0,0,0.2); margin-bottom: 20px; }
+        .drop-zone:hover, .drop-zone.dragover { background: rgba(168, 85, 247, 0.1); border-color: var(--primary-hover); color: var(--primary-hover); }
+        
+        .btn-action { background: var(--primary); color: #fff; text-align: center; border: none; font-weight: bold; font-size: 1.1rem; padding: 15px; border-radius: 8px; cursor: pointer; width: 100%; transition: all 0.2s ease; margin-bottom: 10px;}
+        .btn-action:hover { background: var(--primary-hover); }
+        .btn-secondary { background: #333; border: 1px solid var(--primary); color: #fff; padding: 10px 20px; border-radius: 8px; cursor: pointer; transition: background 0.2s; font-size: 1rem; width: 100%; margin-bottom: 10px;}
+        .btn-secondary:hover { background: var(--primary); }
+        
+        .hidden { display: none !important; }
+        
+        .setup-list { max-height: 60vh; overflow-y: auto; padding-right: 10px; margin-bottom: 20px; text-align: left; }
+        .setup-item { background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 3px solid var(--primary); }
+        .setup-question { font-weight: bold; margin-bottom: 10px; font-size: 1.1rem; }
+        .setup-options { display: flex; flex-direction: column; gap: 8px; }
+        .setup-options label { cursor: pointer; padding: 5px; border-radius: 4px; transition: background 0.2s; display: flex; align-items: center;}
+        .setup-options label:hover { background: rgba(168, 85, 247, 0.1); }
+        .setup-options input { margin-right: 10px; accent-color: var(--primary); flex-shrink: 0;}
+        
+        .score-panel { text-align: center; font-size: 1.1rem; margin-bottom: 1.5rem; color: var(--primary-hover); font-weight: bold; }
+        h2.question-text { font-size: 1.3rem; margin-bottom: 1.5rem; line-height: 1.4; text-align: left;}
+        .options-container { display: flex; flex-direction: column; gap: 10px; }
+        .option-btn { background: transparent; color: var(--text); border: 2px solid #444; padding: 15px; border-radius: 8px; cursor: pointer; text-align: left; font-size: 1rem; transition: all 0.2s ease; }
+        .option-btn:hover:not(:disabled) { border-color: var(--primary); }
+        .option-btn.correct { background: rgba(34, 197, 94, 0.2); border-color: var(--success); color: #fff; }
+        .option-btn.incorrect { background: rgba(239, 68, 68, 0.2); border-color: var(--error); color: #fff; }
+        .feedback { text-align: center; margin-top: 15px; font-weight: bold; font-size: 1.2rem; min-height: 50px; }
+        .feedback.success { color: var(--success); }
+        .feedback.error { color: var(--error); }
+        .feedback-correct-text { font-size: 1rem; color: #ccc; font-weight: normal; display: block; margin-top: 5px; }
+        .footer-controls { margin-top: 2rem; display: flex; justify-content: space-between; }
+    </style>
+</head>
+<body>
+    <div class="container" id="view-init">
+        <h1>🦇 Cuestionario desde PDF 🦇</h1>
+        <div id="storage-notice" class="hidden" style="background: rgba(34, 197, 94, 0.1); padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid var(--success); text-align: center;">
+            <p>¡Tienes respuestas guardadas en tu navegador!</p>
+            <button class="btn-secondary" onclick="irAEstudio()">Ir directo a Estudiar las que ya llené</button>
+            <button class="btn-secondary" onclick="irAConfiguracion()">Continuar marcando respuestas</button>
+            <button class="btn-secondary" style="border-color: var(--error); color: #ccc;" onclick="borrarDatos()">Borrar todo e iniciar de cero</button>
+        </div>
+        
+        <div id="input-section">
+            <p class="subtitle">Sube tu archivo PDF de la guía. La app extraerá las preguntas y te dejará configurarlo manualmente.</p>
+            <input type="file" id="pdfInput" accept="application/pdf" class="hidden">
+            <div class="drop-zone" id="dropZone" onclick="document.getElementById('pdfInput').click()">
+                📄 Haz clic aquí o arrastra tu archivo PDF
+            </div>
+        </div>
+    </div>
+
+    <div class="container hidden" id="view-setup">
+        <h1>Clave de Respuestas 🔑</h1>
+        <p class="subtitle">Selecciona la respuesta correcta. Puedes marcar solo algunas y estudiarlas, el resto se guardará para después.</p>
+        <div class="setup-list" id="setupList"></div>
+        <button class="btn-action" onclick="guardarYEstudiar()">Guardar y empezar a Estudiar 🖤</button>
+        <button class="btn-secondary" onclick="location.reload()">Volver al Inicio</button>
+    </div>
+
+    <div class="container hidden" id="view-quiz" style="text-align: left;">
+        <div class="score-panel" id="scoreDisplay">Pregunta 1 de ? | Aciertos: 0</div>
+        <h2 class="question-text" id="questionText"></h2>
+        <div class="options-container" id="optionsContainer"></div>
+        <div id="feedbackText" class="feedback"></div>
+        <div class="footer-controls">
+            <button class="btn-secondary" style="width: auto;" onclick="location.reload()">Salir</button>
+            <button class="btn-secondary hidden" style="width: auto; background: var(--primary); border-color: var(--primary);" id="nextBtn" onclick="siguientePregunta()">Siguiente 🖤</button>
+        </div>
+    </div>
+
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+        
+        let preguntas = [];
+        let preguntasQuiz = []; // Solo las que tengan respuesta asignada
+        let actual = 0;
+        let aciertos = 0;
+
+        window.onload = function() {
+            const guardado = localStorage.getItem('cuestionario_custom_axity_pdf');
+            if (guardado) {
+                preguntas = JSON.parse(guardado);
+                document.getElementById('storage-notice').classList.remove('hidden');
+                document.getElementById('input-section').classList.add('hidden');
+            }
+        };
+
+        function borrarDatos() {
+            if(confirm("¿Estás segura de borrar todo tu progreso? Tendrás que volver a procesar el PDF.")) {
+                localStorage.removeItem('cuestionario_custom_axity_pdf');
+                location.reload();
+            }
+        }
+
+        const dropZone = document.getElementById('dropZone');
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            if(e.dataTransfer.files.length) procesarPDF(e.dataTransfer.files[0]);
+        });
+
+        document.getElementById('pdfInput').addEventListener('change', function(e) {
+            if(e.target.files.length) procesarPDF(e.target.files[0]);
+        });
+
+        async function procesarPDF(file) {
+            if(file.type !== 'application/pdf') return alert('Por favor sube un archivo PDF válido.');
+            dropZone.innerHTML = "✨ Extrayendo preguntas del PDF... 🦇";
+            
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
+                let textoExtraido = "";
+
+                for(let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const textContent = await page.getTextContent();
+                    let lastY = -1;
+                    for(let item of textContent.items) {
+                        if(lastY !== -1 && Math.abs(lastY - item.transform[5]) > 5) {
+                            textoExtraido += "\n";
+                        }
+                        textoExtraido += item.str;
+                        lastY = item.transform[5];
+                    }
+                    textoExtraido += "\n";
+                }
+                parsearTexto(textoExtraido);
+            } catch(error) {
+                alert("Hubo un error leyendo el PDF: " + error.message);
+                dropZone.innerHTML = "📄 Haz clic aquí o arrastra tu PDF";
+            }
+        }
+
+        function parsearTexto(texto) {
+            const fragmentos = texto.split(/\n\s*(?=\d+\s*[\.\-\)])/);
+            preguntas = [];
+            
+            fragmentos.forEach(frag => {
+                if(!frag.trim()) return;
+                const lineas = frag.trim().split('\n');
+                const matchPregunta = lineas[0].match(/^(\d+)\s*[\.\-\)]\s*(.*)/);
+                
+                if(matchPregunta) {
+                    const id = matchPregunta[1];
+                    let preguntaTexto = matchPregunta[2];
+                    let i = 1;
+                    while(i < lineas.length && !/^\s*[a-z]\s*[\.\-\)]/i.test(lineas[i])) {
+                        preguntaTexto += " " + lineas[i];
+                        i++;
+                    }
+                    
+                    let restoTexto = lineas.slice(i).join('\n');
+                    const RegexOpciones = /([a-z])\s*[\.\-\)]\s+(.*?)(?=\n\s*[a-z]\s*[\.\-\)]|$)/gsi;
+                    let opciones = [];
+                    let matchOpt;
+                    
+                    while ((matchOpt = RegexOpciones.exec(restoTexto)) !== null) {
+                        opciones.push({ letra: matchOpt[1].toLowerCase(), texto: matchOpt[2].replace(/\n/g, ' ').trim() });
+                    }
+                    
+                    if(!preguntaTexto.includes("GUÍA DE ESTUDIO") && opciones.length > 0) {
+                        preguntas.push({ id: parseInt(id), pregunta: preguntaTexto.trim(), opciones, respuestaCorrecta: null });
+                    }
+                }
+            });
+
+            preguntas.sort((a,b) => a.id - b.id);
+
+            if(preguntas.length > 0) {
+                guardarEnStorage();
+                irAConfiguracion();
+            } else {
+                alert("No pude detectar el formato de preguntas. Asegúrate de que es la guía correcta.");
+                dropZone.innerHTML = "📄 Haz clic aquí o arrastra tu PDF";
+            }
+        }
+
+        function guardarEnStorage() {
+            localStorage.setItem('cuestionario_custom_axity_pdf', JSON.stringify(preguntas));
+        }
+
+        function irAConfiguracion() {
+            document.getElementById('view-init').classList.add('hidden');
+            document.getElementById('view-setup').classList.remove('hidden');
+            
+            const lista = document.getElementById('setupList');
+            lista.innerHTML = '';
+            
+            preguntas.forEach((p, index) => {
+                let div = document.createElement('div');
+                div.className = 'setup-item';
+                
+                let qText = document.createElement('div');
+                qText.className = 'setup-question';
+                qText.innerText = `${p.id}. ${p.pregunta}`;
+                div.appendChild(qText);
+                
+                let optContainer = document.createElement('div');
+                optContainer.className = 'setup-options';
+                
+                p.opciones.forEach(opt => {
+                    let label = document.createElement('label');
+                    let radio = document.createElement('input');
+                    radio.type = 'radio';
+                    radio.name = `q_${index}`;
+                    radio.value = opt.letra;
+                    
+                    if(p.respuestaCorrecta === opt.letra) radio.checked = true;
+                    
+                    radio.addEventListener('change', (e) => {
+                        preguntas[index].respuestaCorrecta = e.target.value;
+                        guardarEnStorage();
+                    });
+                    
+                    label.appendChild(radio);
+                    label.appendChild(document.createTextNode(` ${opt.letra}) ${opt.texto}`));
+                    optContainer.appendChild(label);
+                });
+                
+                div.appendChild(optContainer);
+                lista.appendChild(div);
+            });
+        }
+
+        function guardarYEstudiar() {
+            irAEstudio();
+        }
+
+        function irAEstudio() {
+            // Filtramos SOLO las preguntas que ya tienen respuesta marcada
+            preguntasQuiz = preguntas.filter(p => p.respuestaCorrecta !== null);
+            
+            if(preguntasQuiz.length === 0) {
+                alert("¡No has marcado ninguna respuesta correcta! Selecciona al menos una en la lista para poder estudiar.");
+                return;
+            }
+
+            if(preguntasQuiz.length < preguntas.length) {
+                if(!confirm(`Solo has llenado ${preguntasQuiz.length} de ${preguntas.length} preguntas. El cuestionario se armará únicamente con esas ${preguntasQuiz.length}. ¿Continuar?`)) {
+                    return;
+                }
+            }
+
+            document.getElementById('view-init').classList.add('hidden');
+            document.getElementById('view-setup').classList.add('hidden');
+            document.getElementById('view-quiz').classList.remove('hidden');
+            
+            actual = 0;
+            aciertos = 0;
+            mostrarPregunta();
+        }
+
+        function mostrarPregunta() {
+            const p = preguntasQuiz[actual];
+            document.getElementById('scoreDisplay').innerText = `Estudiando bloque de ${preguntasQuiz.length} | Aciertos: ${aciertos}`;
+            document.getElementById('questionText').innerText = `${p.id}. ${p.pregunta}`;
+            
+            const container = document.getElementById('optionsContainer');
+            container.innerHTML = '';
+            document.getElementById('nextBtn').classList.add('hidden');
+            document.getElementById('feedbackText').innerHTML = '';
+            document.getElementById('feedbackText').className = 'feedback';
+            
+            p.opciones.forEach((opt, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.id = 'opt-' + index;
+                btn.innerText = `${opt.letra}) ${opt.texto}`;
+                btn.onclick = () => seleccionar(btn, opt.letra, p.respuestaCorrecta, index, p.opciones);
+                container.appendChild(btn);
+            });
+        }
+
+        function seleccionar(btn, letraSeleccionada, letraCorrecta, selectedIndex, opciones) {
+            const container = document.getElementById('optionsContainer');
+            Array.from(container.children).forEach(b => b.disabled = true);
+            
+            const feedback = document.getElementById('feedbackText');
+            
+            if (letraSeleccionada === letraCorrecta) {
+                btn.classList.add('correct');
+                feedback.innerHTML = "¡Correcto! 🦇✨";
+                feedback.className = 'feedback success';
+                aciertos++;
+            } else {
+                btn.classList.add('incorrect');
+                let opcionCorrectaObj = opciones.find(o => o.letra === letraCorrecta);
+                let textoCorrecto = opcionCorrectaObj ? `${opcionCorrectaObj.letra}) ${opcionCorrectaObj.texto}` : letraCorrecta;
+                
+                feedback.innerHTML = `Incorrecto 🥺 <span class="feedback-correct-text">La respuesta correcta era:<br><b>${textoCorrecto}</b></span>`;
+                feedback.className = 'feedback error';
+                
+                opciones.forEach((o, i) => {
+                    if (o.letra === letraCorrecta) {
+                        document.getElementById('opt-' + i).classList.add('correct');
+                    }
+                });
+            }
+            
+            document.getElementById('scoreDisplay').innerText = `Estudiando bloque de ${preguntasQuiz.length} | Aciertos: ${aciertos}`;
+            document.getElementById('nextBtn').classList.remove('hidden');
+        }
+
+        function siguientePregunta() {
+            actual++;
+            if(actual < preguntasQuiz.length) {
+                mostrarPregunta();
+            } else {
+                let porcentaje = Math.round((aciertos / preguntasQuiz.length) * 100);
+                document.getElementById('view-quiz').innerHTML = 
+                    `<h1 style="text-align:center;">¡Bloque Completado! 🦇</h1>
+                     <p class="subtitle" style="text-align:center;">Terminaste tu sesión de estudio de ${preguntasQuiz.length} preguntas.</p>
+                     <div style="text-align:center; font-size: 2rem; margin: 20px 0; color: var(--primary);">
+                        Calificación: ${aciertos} / ${preguntasQuiz.length} (${porcentaje}%)
+                     </div>
+                     <div style="text-align:center;">
+                        <button class="btn-secondary" style="width:auto;" onclick="location.reload()">Volver al Inicio y seguir agregando</button>
+                     </div>`;
+            }
+        }
+    </script>
+</body>
+</html>
